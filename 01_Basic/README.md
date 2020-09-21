@@ -48,11 +48,11 @@ CC=arm-linux-gnueabihf-
 KERNEL_DIR=/<prebuilt_kernel_source_dir>/
 
 all:
-  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(PWD) modules
+  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(shell pwd) modules
 clean:
-  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(PWD) clean
+  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(shell pwd) clean
 help:
-  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(PWD) help
+  make ARCH=$(ARCH) CROSS_COMIPLE=$(CC) -C $(KERNEL_DIR) M=$(shell pwd) help
 ```
 
 
@@ -84,11 +84,11 @@ obj-m := main.o
 KERNEL_DIR=/lib/modules/$(shell uname -r)/build/
 
 all:
-  make -C $(KERNEL_DIR) M=$(PWD) modules
+  make -C $(KERNEL_DIR) M=$(shell pwd) modules
 clean:
-  make -C $(KERNEL_DIR) M=$(PWD) clean
+  make -C $(KERNEL_DIR) M=$(shell pwd) clean
 help:
-  make -C $(KERNEL_DIR) M=$(PWD) help
+  make -C $(KERNEL_DIR) M=$(shell pwd) help
 ```
 ## 3. Testing the first LKM
 ### 3.1 Dynamically loadable
