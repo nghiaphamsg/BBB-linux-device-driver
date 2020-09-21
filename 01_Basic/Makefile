@@ -2,8 +2,8 @@ obj-m := main.o
 KERNEL_DIR=/lib/modules/$(shell uname -r)/build/
 
 all:
-	make -C $(KERNEL_DIR) M=$(PWD) modules
+	make -C $(KERNEL_DIR) M=$(shell pwd) modules
 clean:
-	make -C $(KERNEL_DIR) M=$(PWD) clean
+	make -C $(KERNEL_DIR) M=$(shell pwd) clean
 help:
-	make -C $(KERNEL_DIR) M=$(PWD) help
+	make -C $(KERNEL_DIR) M=$(shell pwd) help
