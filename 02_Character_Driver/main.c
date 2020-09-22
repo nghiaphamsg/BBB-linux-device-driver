@@ -1,3 +1,14 @@
+/*
+ * @brief: Write a character driver to deal with a pseudo character device (pcd).
+ *         The pseudo-device is a memory buffer of some size. The driver what you
+ *         write must support reading, writing and seeking to this device
+ *         Test the driver functionality by running user-level.
+ * @author: NghiaPham 
+ * @ver: v0.1 
+ * @date: 2020/09/23
+ *
+*/
+
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
@@ -43,13 +54,12 @@ int pcd_release(struct inode *inode, struct file *filp) {
     return 0;
 }
 
-loff_t pcd_lseek(struct file *filp, loff_t offset, int whence){
+loff_t pcd_lseek(struct file *filp, loff_t offset, int whence) {
 
     return 0;
 }
 
-struct file_operations pcd_fops = 
-{
+struct file_operations pcd_fops = {
     .open = pcd_open,
     .write = pcd_write,
     .read = pcd_read,
