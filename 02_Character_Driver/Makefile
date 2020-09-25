@@ -1,4 +1,4 @@
-obj-m := main.o
+obj-m := pcd.o
 KERNEL_DIR=/lib/modules/$(shell uname -r)/build/
 
 all:
