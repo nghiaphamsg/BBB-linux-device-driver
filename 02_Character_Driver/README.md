@@ -247,3 +247,35 @@ unsigned long copy_from_user(void *to, const void __user *from, unsigned long n)
 ```
 - **void \*to**: Destination address, in kernel space
 - **const void __user \*from**: Source address, in user space
+
+## 4. Testing
+- Step 1: Generate `*.ko` and test pcd object
+```shell
+root@nekobot:~/02_Character_Driver# make
+```
+- Step 2: Load kernel module
+```shell
+root@nekobot:~/02_Character_Driver# insmod pcd.ko
+```
+- Step 3.1: Using `cat` and `echo` command for read and write
+```shell
+$ root@nekobot:~/02_Character_Driver# echo "Someone like you" > /dev/pcd
+$ root@nekobot:~/02_Character_Driver# cat /dev/pcd
+```
+- Step 3.2: Using test pcd
+```shell
+$ root@nekobot:~/02_Character_Driver# ./pcdtest
+    Starting device test code example...
+    Type in a short string to send to the kernel module:
+    You are my apple     
+    Press ENTER to read back from the device...
+
+    The received message is: You are my apple
+
+    End of the program
+```
+- Step 4: Unload module
+```shell
+root@nekobot:~/02_Character_Driver# rmmod pcd.ko
+```
+**Note:** You can check kernel log by command `dmesg | tail`
