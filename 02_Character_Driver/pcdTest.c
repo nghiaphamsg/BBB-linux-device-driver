@@ -1,5 +1,5 @@
 /*
- * @brief: thís file was made to check the character device
+ * @brief: this file was made to check the character device
  * @author: NghiaPham
  * @date: 2020/09/26
  * @version: v0.1
