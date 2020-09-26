@@ -3,8 +3,8 @@
  *         The pseudo-device is a memory buffer of some size. The driver what you
  *         write must support reading, writing and seeking to this device
  *         Test the driver functionality by running user-level.
- * @author: NghiaPham 
- * @ver: v0.2 
+ * @author: NghiaPham
+ * @ver: v0.3
  * @date: 2020/09/23
  *
 */
@@ -32,10 +32,64 @@ dev_t device_number;
 struct cdev pcd_cdev = {
     .owner = THIS_MODULE
 };
-
 struct class *class_pcd;
-
 struct device *device_pcd;
+
+/* The prototype functions for the character driver -- must come before the struct definition */
+int pcd_open(struct inode *inode, struct file *filp);
+int pcd_release(struct inode *inode, struct file *filp);
+ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos);
+ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos);
+loff_t pcd_lseek(struct file *filp, loff_t offset, int whence);
+
+struct file_operations pcd_fops = {
+    .open = pcd_open,
+    .write = pcd_write,
+    .read = pcd_read,
+    .release = pcd_release,
+    .llseek = pcd_lseek,
+    .owner = THIS_MODULE
+};
+
+int pcd_open(struct inode *inode, struct file *filp) {
+    pr_info("Opened successful\n");
+    return 0;
+}
+
+ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos) {
+
+    /* Ajust the count argument */
+    if ((*f_pos + count) > MEM_SIZE)
+        count = MEM_SIZE - *f_pos;
+
+    if (copy_to_user(buff, device_buffer, count))
+        return -EFAULT;
+    
+    /* Update current file position */
+    *f_pos += count;
+    pr_info("Number of bytes successfully read = %zu\n", count);
+
+    return count;
+}
+
+ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos) {
+
+    /* Ajust the count argument */
+    if ((*f_pos + count) > MEM_SIZE)
+        count = MEM_SIZE - *f_pos;
+
+    if (!count)
+        return -ENOMEM;
+
+    if (copy_from_user(device_buffer, buff, count))
+        return -EFAULT;
+
+    /* Update current file position */
+    *f_pos += count;
+    pr_info("Number of bytes successfully written = %zu\n", count);
+
+    return count;
+}
 
 loff_t pcd_lseek(struct file *filp, loff_t offset, int whence) {
 
@@ -67,63 +121,10 @@ loff_t pcd_lseek(struct file *filp, loff_t offset, int whence) {
     return filp->f_pos;
 }
 
-ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos) {
-    int temp = 0;
-
-    /* Ajust the count argument */
-    if ((*f_pos + count) > MEM_SIZE)
-        count = MEM_SIZE - *f_pos;
-
-    temp = copy_to_user(buff, &device_buffer[*f_pos], count);
-    if (temp != 0)
-        return -EFAULT;
-    
-    /* Update current file position */
-    *f_pos += count;
-    pr_info("Number of bytes successfully read = %zu\n", count);
-
-    return count;
-}
-
-ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos) {
-    int temp = 0;
-
-    /* Ajust the count argument */
-    if ((*f_pos + count) > MEM_SIZE)
-        count = MEM_SIZE - *f_pos;
-
-    if (!count)
-        return -ENOMEM;
-
-    temp = copy_from_user(&device_buffer[*f_pos], buff, count);
-    if (temp != 0)
-        return -EFAULT;
-    
-    /* Update current file position */
-    *f_pos += count;
-    pr_info("Number of bytes successfully written = %zu\n", count);
-
-    return count;
-}
-
-int pcd_open(struct inode *inode, struct file *filp) {
-    pr_info("Opened successful\n");
-    return 0;
-}
-
 int pcd_release(struct inode *inode, struct file *filp) {
     pr_info("Released successful\n");
     return 0;
 }
-
-struct file_operations pcd_fops = {
-    .open = pcd_open,
-    .write = pcd_write,
-    .read = pcd_read,
-    .release = pcd_release,
-    .llseek = pcd_lseek,
-    .owner = THIS_MODULE
-};
 
 static int __init char_device_driver_init(void) {
 

@@ -1,4 +1,4 @@
-<h1> Character Driver </h1>
+<h1> Character Driver Basic </h1>
 
 - Character driver accesses data from the device sequentially. i.e., byte by byte (like a stream of characters) not as a chunk of data.
 - Sophisticated buffering strategies are usually not involved in char drivers. Because when you write 1 byte, it directly goes to the device without any intermediate buffering, delayed write back, dirty buffer management.
@@ -49,7 +49,7 @@ alloc_chrdev_region(&device_number, 0, 1, "pcd_devices");
 ### Step 2: Create device files
 **- Initialize a cdev_init structure**
 ```text
-void cdev_init (struct cdev *cdev, const struct file_operations *fops);
+void cdev_init (struct cdev *cdev, const struct file_operations *fops)
 ```
 + **struct cdev \*cdev**: the structure to initialize
 + **const struct file_operations \*fops**: the file operations for this device (open, read, write, lseek, mmap, flush,...)
@@ -57,7 +57,7 @@ void cdev_init (struct cdev *cdev, const struct file_operations *fops);
 
 **- cdev_add - add a char device to the system**
 ```text
-int cdev_add (struct cdev *p, dev_t dev, unsigned count);
+int cdev_add (struct cdev *p, dev_t dev, unsigned count)
 ```
 + **struct cdev \*p**: the `cdev` structure for the device
 + **dev_t dev**: the first device number for which this device is responsible
@@ -97,13 +97,12 @@ struct class *class_create(struct module *owner, const char *name)
 
 **- Populates the sysfs class you created in previous step with device numbers and device names**
 ```text
-struct device * device_create (struct class *class, struct device *parent, dev_t devt, const char *fmt, ...);
+struct device *device_create (struct class *class, struct device *parent, dev_t devt, const char *fmt, ...)
 ```
 + **struct class \*class**: pointer to the struct class that this device should be registered to
 + **struct device \*parent**: pointer to the parent struct device of this new device, if any
 + **dev_t devt**: the dev_t for the char device to be added
 + **const char \*fmt**: string for the device's name
-+ ...: variable arguments
 
 **Example:**
 ```text
@@ -119,8 +118,68 @@ device_pcd = device_create(class_pcd, NULL, device_number, NULL, "pcd");
 ### Step 4: Implement the driver’s file operation methods for open, read, write, lseek.
 - In this character driver we will give support to handle the below user level system call (open/close/read/write/llseek)
 
+- Open: 
+    + Initialize the device or make device respond for `read/write` access
+    + Detect device initialization errors
+    + Check open permission **(O_RDONLY, O_WRONLY, O_RDWR)**
+    + Identify the device being opened using minor number
+    + Prepare device private data structure if required
+    + Update `f_pos` if required
+    + Open method is optional. If not provided, open will always succeed and driver is not notified.
+
+```text
+int (*open) (struct inode *inode, struct file *filp)
+```
+
+- Close:
+    + In release method the driver can do reverse operation of what open had done.
+        + E.g. if open method brings the device out of low power mode, then release method may send the device back to the low power mode.
+        + Basically you should leave the device in its default state, the state which was before the open call.
+        + Free any data structures allocated by the open method
+    + Return 0 on success. Negative error code if any errors
+    + For example you try to de-initialize the device and the device doesn’t respond
+```text
+int (*release) (struct inode *inode, struct file *filp)
+```
+
+- Read:
+    + Read `count` bytes from a device starting at position `f_pos`
+    + Update the `f_pos` by adding the number bytes successfully read
+    + Return number of bytes successfully read
+    + Return 0 if there is no bytes to read (EOF)
+    + Return appropriate error code (-ve value) if any error
+    + A return value less than `count` does not mean that an error has occurred
+```text
+ssize_t (*read) (struct file *filp, char __user *buff, size_t count, loff_t *f_pos)
+```
+
+- Write:
+    + Write `count` bytes into the device starting at position `f_pos`
+    + Update the `f_pos` by adding the number bytes successfully written
+    + Return number of bytes successfully written
+    + Return appropriate error code (-ve value) if any error
+```text
+ssize_t (*write) (struct file *filp, const char __user *buff, size_t count, loff_t *f_pos)
+```
+
+- Llseek:
+    + In the llseek method, driver should update the file pointer by using `offset` and `whence` information
+    + The llseek handler should return, newly updated file position or error
+```text
+loff_t (*llseek) (struct file *filp, loff_t offset, int whence)
+```
+
++ **struct inode \*inode**: pointer of inode associated with filename
++ **struct file \*filp**: pointer of file object
++ **const char __user \*buff**: pointer of user buffer
++ **size_t count**: count given by user
++ **loff_t \*f_pos**: pointer of current file position from which the write has to begin
++ **loff_t offset**: offset value
++ **int whence**: point from which offset is to be interpreted (SEEK_SET, SEEK_CUR, SEEK_END)
 
 #### Summary
+<p align="center"> <img width="750" src="https://user-images.githubusercontent.com/32474027/94337200-c130fa80-0023-11eb-8b6d-e842ba12116f.png"> </p>
+
 - When device file gets created
 1. Create device file using `udev`
 2. Inode object gets created in memory and inode's `i_rdev` field is initialized with device number
@@ -134,3 +193,57 @@ device_pcd = device_create(class_pcd, NULL, device_number, NULL, "pcd");
 5. Inode object's `i_cdev` field is initialized with `cdev` which you added during `cdev_add` (lookup happens using inode-> i_rdev field)
 6. `inode->cdev->fops` (this is a real file operations of your driver) gets copied to `file->f_op`
 7. `file->f_op->open` method gets called (read open method of your driver)
+
+
+## 3. Other kernel APIs & Macros
+
+### 3.1. Character driver clean-up function
+- Remove a device that was created with `device_create()`
+```text
+void device_destroy(struct class *class, dev_t devt)
+```
+- Destroys a struct class structure
+```text
+void class_destroy(struct class *cls)
+```
+- Remove `cdev` registration from the kernel VFS
+```text
+void cdev_del(struct cdev *p)
+```
+- Unregister a range of device numbers
+```text
+void unregister_chrdev_region(dev_t from, unsigned count)
+```
++ **struct class \*class**: pointer to the struct class that this device was registered with
++ **dev_t devt**: `dev_t` of the device that was previously registered
++ **struct class \*cls**: pointer to the struct class that is to be destroyed
++ **struct cdev \*p**: `cdev` structure to be removed
++ **dev_t from**: the first in the range of numbers to unregister
++ **unsigned count**: number of device numbers to unregister
+
+### 3.2. Error handling of pointers during kernel function return
+- You can use some kernel macros to deal with return of error pointers by kernel functions.
+- The below macros help to understand what made kernel function to fail:
+    + IS_ERR()
+    + PTR_ERR()
+    + ERR_PTR()
+- These macros can be found in include `include/linux/err.h`
+- Error codes and descriptions (Ex: ENOMEM/EPERM/ENFILE/...): `include/uapi/asm-generic/errno-base.h`
+
+### 3.3. Data copying between Kernel space and user space
+- Copying data between user space and kernel space
+- Check whether the user space pointer is valid or not
+- If the pointer is invalid, no copy is performed
+- If an invalid address is encountered during the copy, only part of the data is copied. In both cases, the return value is the **amount of memory still to be copied**
+```text
+unsigned long copy_to_user(void __user *to, const void *from, unsigned long n)
+```
+- **void __user \*to**: Destination address, in user space
+- **const void \*from**: Source address, in kernel space
+- **unsigned long n**: Number of bytes to copy
+
+```text
+unsigned long copy_from_user(void *to, const void __user *from, unsigned long n)
+```
+- **void \*to**: Destination address, in kernel space
+- **const void __user \*from**: Source address, in user space
