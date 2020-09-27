@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
     int size;
 
     if(argc < 2){
-        printf("Wrong usage\n");
-        printf("Correct usage: <file> <readcount>\n");
+        printf("Usage: %s [read/write] <read size> \n", argv[0]);
+        printf("E.g. %s read 1024\n", argv[0]);
         return 0;
     }
 
