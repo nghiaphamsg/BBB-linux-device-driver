@@ -34,7 +34,7 @@ int main() {
     printf("Type in a short string to send to the kernel module:\n");
     scanf(" %[^\n]%*c", stringSend);
 
-    ret = write(fd, stringSend, strlen(stringSend));
+    ret = write(fd, stringSend, BUFF_SIZE);
     if (ret < 0) {
         printf("Failed to write the message to the device\n");
         return errno;
