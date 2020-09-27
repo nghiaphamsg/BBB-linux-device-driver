@@ -85,13 +85,13 @@ int user_read(int size) {
 
 int main(int argc, char *argv[])
 {
-	int size;
+    int size;
 
-	if(argc < 2){
-		printf("Wrong usage\n");
-		printf("Correct usage: <file> <readcount>\n");
-		return 0;
-	}
+    if(argc < 2){
+        printf("Wrong usage\n");
+        printf("Correct usage: <file> <readcount>\n");
+        return 0;
+    }
 
     if (strcmp(argv[1], "write") == 0)
         user_write();
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         user_read(size);
     }
 
-	/* Activate this for lseek testing */
+    /* Activate this for lseek testing */
 #if  0 
 	ret = lseek(fd,-10,SEEK_SET);
 	if(ret < 0){
