@@ -40,7 +40,7 @@ struct pcdev_private_data {
     char *buffer;
     unsigned size;
     const char *serial_number;
-    int permisson;
+    int permission;
     struct cdev cdev;
 };
 
@@ -61,31 +61,31 @@ struct pcdrv_private_data pcdrv_data = {
                     .buffer = device_buffer_pcd1,
                     .size = MEM_SIZE_PCD1,
                     .serial_number = "PCD_DEV1",
-                    .permisson = RDONLY
+                    .permission = RDONLY
             },
             [1] = {
                     .buffer = device_buffer_pcd2,
                     .size = MEM_SIZE_PCD2,
                     .serial_number = "PCD_DEV2",
-                    .permisson = WRONLY
+                    .permission = WRONLY
             },
             [2] = {
                     .buffer = device_buffer_pcd3,
                     .size = MEM_SIZE_PCD3,
                     .serial_number = "PCD_DEV3",
-                    .permisson = RDWR
+                    .permission = RDWR
             },
             [3] = {
                     .buffer = device_buffer_pcd4,
                     .size = MEM_SIZE_PCD4,
                     .serial_number = "PCD_DEV4",
-                    .permisson = RDWR
+                    .permission = RDWR
             }
     }
 };
 
 /* The prototype functions for the character driver -- must come before the struct definition */
-int check_permission(int permisson, int access_mode);
+int check_permission(int permission, int access_mode);
 int pcd_open(struct inode *inode, struct file *filp);
 int pcd_release(struct inode *inode, struct file *filp);
 ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos);
@@ -101,17 +101,17 @@ struct file_operations pcd_fops = {
     .owner = THIS_MODULE
 };
 
-int check_permission(int permisson, int access_mode){
+int check_permission(int permission, int access_mode){
 
-    if (permisson == RDWR)
+    if (permission == RDWR)
         return 0;
 
     /* Read only access */
-    if ((permisson == RDONLY) && ((access_mode & FMODE_READ) && !(access_mode & FMODE_WRITE)))
+    if ((permission == RDONLY) && ((access_mode & FMODE_READ) && !(access_mode & FMODE_WRITE)))
         return 0;
 
     /* Write only access */
-    if ((permisson == WRONLY) && ((access_mode & FMODE_WRITE) && !(access_mode & FMODE_READ)))
+    if ((permission == WRONLY) && ((access_mode & FMODE_WRITE) && !(access_mode & FMODE_READ)))
         return 0;
     
     return -EPERM;
@@ -131,8 +131,8 @@ int pcd_open(struct inode *inode, struct file *filp) {
     /* Supply device private data to other method of the driver */
     filp->private_data = pcdev_data;
 
-    /* Check permisson */
-    ret = check_permission(pcdev_data->permisson, filp->f_mode);
+    /* Check permission */
+    ret = check_permission(pcdev_data->permission, filp->f_mode);
     if (!ret)
         pr_info("Open was successful\n");
     else
