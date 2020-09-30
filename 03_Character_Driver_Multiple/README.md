@@ -35,6 +35,31 @@ struct pcdev_private_data {
 }
 ```
 
+## 3. Testing
+- Step 1: Generate `*.ko` and test pcd object
+```shell
+root@nekobot:~/03_Character_Driver_Multiple# make
+```
+- Step 2: Load into kernel module
+```shell
+root@nekobot:~/03_Character_Driver_Multiple# insmod pcd_multiple.ko
+```
+- Step 3: Using pcd_mul_test for write
+```shell
+$ root@nekobot:~/03_Character_Driver_Multiple# ./pcd_mul_test write
+    Type in a short string to send to the kernel module:
+    You are my apple
+```
+- Step 4: Using pcd_mul_test for read
+```shell
+$ root@nekobot:~/03_Character_Driver_Multiple# ./pcd_mul_test read 1024
+    You are my apple
+```
+- Step 4: Unload module
+```shell
+root@nekobot:~/03_Character_Driver_Multiple# rmmod pcd_multiple
+```
+**Note:** You can check kernel log by command `dmesg | tail`
 
 
 
