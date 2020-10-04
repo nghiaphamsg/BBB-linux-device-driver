@@ -2,7 +2,7 @@
  * @brief: pseudo character device driver to support four pseudo character devices.
  *         Implement open/release/read/write/lseek driver methods to handle user requests.
  * @author: NghiaPham
- * @ver: v0.1
+ * @ver: v0.2
  * @date: 2020/09/26
  *
 */
@@ -14,6 +14,7 @@
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/platform_device.h>
+#include "platform.h"
 
 #undef pr_fmt
 #define pr_fmt(fmt) "[%s]: " fmt, __func__
@@ -22,71 +23,25 @@
 #define DEV_NAME        "pcdevs"
 #define NO_OF_DEVICES   4
 
-#define RDONLY          0x01
-#define WRONLY          0x02
-#define RDWR            0x03
-
-#define MEM_SIZE_PCD1   1024
-#define MEM_SIZE_PCD2   512
-#define MEM_SIZE_PCD3   1024
-#define MEM_SIZE_PCD4   512
-
-char device_buffer_pcd1[MEM_SIZE_PCD1];
-char device_buffer_pcd2[MEM_SIZE_PCD2];
-char device_buffer_pcd3[MEM_SIZE_PCD3];
-char device_buffer_pcd4[MEM_SIZE_PCD4];
-
 /* Structure represents device private data */
 struct pcdev_private_data {
+    struct pcdev_platform_data pdata;
+    dev_t dev_num;
     char *buffer;
-    unsigned size;
-    const char *serial_number;
-    int permisson;
     struct cdev cdev;
 };
 
 /* Structure represents driver private data */
 struct pcdrv_private_data {
     int total_device;
-    struct pcdev_private_data pcdev_data[NO_OF_DEVICES];
-    dev_t device_number;
+    dev_t device_number_base;
     struct class *class_pcd;
     struct device *device_pcd;
 };
-
-/* Initialization every device */
-struct pcdrv_private_data pcdrv_data = {
-    .total_device = NO_OF_DEVICES,
-    .pcdev_data = {
-            [0] = {
-                    .buffer = device_buffer_pcd1,
-                    .size = MEM_SIZE_PCD1,
-                    .serial_number = "PCD_DEV1",
-                    .permisson = RDONLY
-            },
-            [1] = {
-                    .buffer = device_buffer_pcd2,
-                    .size = MEM_SIZE_PCD2,
-                    .serial_number = "PCD_DEV2",
-                    .permisson = WRONLY
-            },
-            [2] = {
-                    .buffer = device_buffer_pcd3,
-                    .size = MEM_SIZE_PCD3,
-                    .serial_number = "PCD_DEV3",
-                    .permisson = RDWR
-            },
-            [3] = {
-                    .buffer = device_buffer_pcd4,
-                    .size = MEM_SIZE_PCD4,
-                    .serial_number = "PCD_DEV4",
-                    .permisson = RDWR
-            }
-    }
-};
+struct pcdrv_private_data pcdrv_data;
 
 /* The prototype functions for the file operations of character driver */
-int check_permission(int permisson, int access_mode);
+int check_permission(int permission, int access_mode);
 int pcd_open(struct inode *inode, struct file *filp);
 int pcd_release(struct inode *inode, struct file *filp);
 ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos);
@@ -106,20 +61,22 @@ struct file_operations pcd_fops = {
     .owner = THIS_MODULE
 };
 
-int check_permission(int permisson, int access_mode){
-
-    if (permisson == RDWR)
+int check_permission(int permission, int access_mode){
+#if 0
+    if (permission == RDWR)
         return 0;
 
     /* Read only access */
-    if ((permisson == RDONLY) && ((access_mode & FMODE_READ) && !(access_mode & FMODE_WRITE)))
+    if ((permission == RDONLY) && ((access_mode & FMODE_READ) && !(access_mode & FMODE_WRITE)))
         return 0;
 
     /* Write only access */
-    if ((permisson == WRONLY) && ((access_mode & FMODE_WRITE) && !(access_mode & FMODE_READ)))
+    if ((permission == WRONLY) && ((access_mode & FMODE_WRITE) && !(access_mode & FMODE_READ)))
         return 0;
     
     return -EPERM;
+#endif
+    return 0;
 }
 
 int pcd_open(struct inode *inode, struct file *filp) {
@@ -136,8 +93,8 @@ int pcd_open(struct inode *inode, struct file *filp) {
     /* Supply device private data to other method of the driver */
     filp->private_data = pcdev_data;
 
-    /* Check permisson */
-    ret = check_permission(pcdev_data->permisson, filp->f_mode);
+    /* Check permission */
+    ret = check_permission(pcdev_data->pdata.permission, filp->f_mode);
     if (!ret)
         pr_info("Open was successful\n");
     else
@@ -150,7 +107,7 @@ ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_p
 
     int max_size;
     struct pcdev_private_data *pcdev_data = (struct pcdev_private_data *)filp->private_data;
-    max_size = pcdev_data->size;
+    max_size = pcdev_data->pdata.size;
 
     pr_info("Read requested for %zu bytes \n",count);
     pr_info("Current file position = %lld\n",*f_pos);
@@ -174,7 +131,7 @@ ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff
 
     int max_size;
     struct pcdev_private_data *pcdev_data = (struct pcdev_private_data *)filp->private_data;
-    max_size = pcdev_data->size;
+    max_size = pcdev_data->pdata.size;
 
     pr_info("Write requested %zu bytes \n",count);
     pr_info("Current file position = %lld\n",*f_pos);
@@ -202,7 +159,7 @@ loff_t pcd_lseek(struct file *filp, loff_t offset, int whence) {
     loff_t temp;
     unsigned int max_size;
     struct pcdev_private_data *pcdev_data = (struct pcdev_private_data *)filp->private_data;
-    max_size = pcdev_data->size;
+    max_size = pcdev_data->pdata.size;
 
     switch (whence) {
         case SEEK_SET:
@@ -228,7 +185,6 @@ loff_t pcd_lseek(struct file *filp, loff_t offset, int whence) {
 
     pr_info("New value of the file position = %lld\n",filp->f_pos);
     return filp->f_pos;
-
 }
 
 int pcd_release(struct inode *inode, struct file *filp) {
@@ -278,7 +234,7 @@ static int __init char_platform_driver_init(void) {
     int ret;
 
     /* Dynamically allocate a device number <one device> */
-    ret = alloc_chrdev_region(&pcdrv_data.device_number, 0, NO_OF_DEVICES, DEV_NAME);
+    ret = alloc_chrdev_region(&pcdrv_data.device_number_base, 0, NO_OF_DEVICES, DEV_NAME);
     if (ret < 0)
         goto error_out;
 
@@ -286,23 +242,31 @@ static int __init char_platform_driver_init(void) {
     pcdrv_data.class_pcd = class_create(THIS_MODULE, CLASS_NAME);
     if (IS_ERR(pcdrv_data.class_pcd)) {
         ret = PTR_ERR(pcdrv_data.class_pcd);
-        goto unregister_char_dd;
+        goto unregister_allocate_dd;
     }
 
-    platform_driver_register(&pcd_platform_driver);
+    ret = platform_driver_register(&pcd_platform_driver);
+    if (ret < 0)
+        goto class_del;
+
     pr_info("Platform driver module loaded\n");
 
     return 0;
 
-unregister_char_dd:
-    unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
+class_del:
+    class_destroy(pcdrv_data.class_pcd);
+    unregister_chrdev_region(pcdrv_data.device_number_base, NO_OF_DEVICES);
+unregister_allocate_dd:
+    unregister_chrdev_region(pcdrv_data.device_number_base, NO_OF_DEVICES);
 error_out:
     return ret;
+
 }
 
 static void __exit char_platform_driver_exit(void) {
     platform_driver_unregister(&pcd_platform_driver);
-    unregister_chrdev_region(pcdrv_data.device_number, NO_OF_DEVICES);
+    class_destroy(pcdrv_data.class_pcd);
+    unregister_chrdev_region(pcdrv_data.device_number_base, NO_OF_DEVICES);
 
     pr_info("Platform driver module unloaded\n");
 }
