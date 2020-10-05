@@ -20,9 +20,11 @@ void pcdev_release(struct device *dev) {
 }
 
 /* Create two platform data */
-struct pcdev_platform_data pcdev_pdata[2] = {
+struct pcdev_platform_data pcdev_pdata[] = {
     [0] = {.size = 512, .permission = RDWR, .serial_number = "PCDEV_1"},
-    [1] = {.size = 512, .permission = RDWR, .serial_number = "PCDEV_2"}
+    [1] = {.size = 512, .permission = RDWR, .serial_number = "PCDEV_2"},
+    [2] = {.size = 1024, .permission = RDONLY, .serial_number = "PCDEV_3"},
+    [3] = {.size = 2048, .permission = WRONLY, .serial_number = "PCDEV_4"}
 };
 
 /* Create two platform device */
@@ -44,10 +46,34 @@ struct platform_device platform_pcdev_2 = {
     }
 };
 
+struct platform_device platform_pcdev_3 = {
+    .name = "pseudo-char-device",
+    .id = 2,
+    .dev = {
+        .platform_data = &pcdev_pdata[2],
+        .release = pcdev_release
+    }
+};
+
+struct platform_device platform_pcdev_4 = {
+    .name = "pseudo-char-device",
+    .id = 3,
+    .dev = {
+        .platform_data = &pcdev_pdata[3],
+        .release = pcdev_release
+    }
+};
+
+struct platform_device *platform_pcdevs[] = {
+    &platform_pcdev_1,
+    &platform_pcdev_2,
+    &platform_pcdev_3,
+    &platform_pcdev_4
+};
+
 static int __init pcdev_platform_init(void) {
     /* Register platform-level device */
-    platform_device_register(&platform_pcdev_1);
-    platform_device_register(&platform_pcdev_2);
+    platform_add_devices(platform_pcdevs, ARRAY_SIZE(platform_pcdevs));
 
     pr_info("Platform device setup module loaded\n");
 
@@ -58,6 +84,8 @@ static void __exit pcdev_platform_exit(void) {
     /* Unregister platform-level device */
     platform_device_unregister(&platform_pcdev_1);
     platform_device_unregister(&platform_pcdev_2);
+    platform_device_unregister(&platform_pcdev_3);
+    platform_device_unregister(&platform_pcdev_4);
 
     pr_info("Platform device setup module unloaded\n");
 }

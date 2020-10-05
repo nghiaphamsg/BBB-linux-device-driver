@@ -14,6 +14,7 @@
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/platform_device.h>
+#include <linux/slab.h>
 #include "platform.h"
 
 #undef pr_fmt
@@ -193,11 +194,77 @@ int pcd_release(struct inode *inode, struct file *filp) {
 }
 
 int pcd_platform_driver_probe(struct platform_device *pdev) {
+
+    int ret;
+    struct pcdev_private_data *dev_data;
+    struct pcdev_platform_data *pdata;
+
     pr_info("Device was detected\n");
+
+    /* Get platform data */
+    pdata = (struct pcdev_platform_data *)dev_get_platdata(&pdev->dev);
+    if (!pdata) {
+        pr_info("No platform data available\n");
+        return -EINVAL;
+    }
+
+    /* Dynamically allocate memory for the device private data */
+    dev_data = devm_kzalloc(&pdev->dev, sizeof(*dev_data), GFP_KERNEL);
+    if (!dev_data) {
+        pr_info("Cannot allocate memory\n");
+        return -ENOMEM;
+    }
+
+    /* Save device private data pointer in platform device structure (release)*/
+    dev_set_drvdata(&pdev->dev, dev_data);
+
+    dev_data->pdata.size = pdata->size;
+    dev_data->pdata.permission = pdata->permission;
+    dev_data->pdata.serial_number = pdata->serial_number;
+
+    pr_info("Device size %d\n", dev_data->pdata.size);
+    pr_info("Device permission %d\n", dev_data->pdata.permission);
+    pr_info("Device serial number %s\n", dev_data->pdata.serial_number);
+
+    /* Dynamically allocate memory for the device buffer */
+    dev_data->buffer = devm_kzalloc(&pdev->dev, dev_data->pdata.size, GFP_KERNEL);
+    if (!dev_data->buffer) {
+        pr_info("Cannot allocate memory\n");
+        return -ENOMEM;
+    }
+
+    dev_data->dev_num = pcdrv_data.device_number_base + pdev->id;
+
+    cdev_init(&dev_data->cdev, &pcd_fops);
+    dev_data->cdev.owner = THIS_MODULE;
+    ret = cdev_add(&dev_data->cdev, dev_data->dev_num, 1);
+    if (ret < 0) {
+        pr_info("Cdev add failed\n");
+        return ret;
+    }
+
+    /* Create device file for the detected platform device */
+    pcdrv_data.device_pcd = device_create(pcdrv_data.class_pcd, NULL, dev_data->dev_num, NULL, "pcdev-%d", pdev->id);
+    if (IS_ERR(pcdrv_data.device_pcd)) {
+        ret = PTR_ERR(pcdrv_data.device_pcd);
+        cdev_del(&dev_data->cdev);
+        return ret;
+    }
+
+    pcdrv_data.total_device++;
+
+    pr_info("Probe was successful\n");
     return 0;
 }
 
 int pcd_platform_driver_remove(struct platform_device *pdev) {
+
+    struct pcdev_private_data *dev_data = dev_get_platdata(&pdev->dev);
+
+    device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
+    cdev_del(&dev_data->cdev);
+    pcdrv_data.total_device--;
+
     pr_info("Device was removed");
     return 0;
 }
