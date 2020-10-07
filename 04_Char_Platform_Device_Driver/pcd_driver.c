@@ -259,7 +259,7 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
 
 int pcd_platform_driver_remove(struct platform_device *pdev) {
 
-    struct pcdev_private_data *dev_data = dev_get_platdata(&pdev->dev);
+    struct pcdev_private_data *dev_data = dev_get_drvdata(&pdev->dev);
 
     device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
     cdev_del(&dev_data->cdev);
