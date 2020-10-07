@@ -2,7 +2,7 @@
  * @brief: pseudo character device driver to support four pseudo character devices.
  *         Implement open/release/read/write/lseek driver methods to handle user requests.
  * @author: NghiaPham
- * @ver: v0.2
+ * @ver: v0.3
  * @date: 2020/09/26
  *
 */
@@ -15,6 +15,7 @@
 #include <linux/uaccess.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/mod_devicetable.h>
 #include "platform.h"
 
 #undef pr_fmt
@@ -23,6 +24,46 @@
 #define CLASS_NAME      "pcd_class"
 #define DEV_NAME        "pcdevs"
 #define NO_OF_DEVICES   4
+
+/* Create dummy device configure */
+enum pcdev_name {
+    PCDEV_A_CONF,
+    PCDEV_B_CONF,
+    PCDEV_C_CONF,
+    PCDEV_D_CONF,
+};
+
+struct device_configure {
+    int configure_num1;
+    int configure_num2;
+};
+
+struct device_configure pcdev_configure[] = {
+    [PCDEV_A_CONF] = {.configure_num1 = 40, .configure_num2 = 254 },
+    [PCDEV_B_CONF] = {.configure_num1 = 50, .configure_num2 = 253 },
+    [PCDEV_C_CONF] = {.configure_num1 = 60, .configure_num2 = 252 },
+    [PCDEV_D_CONF] = {.configure_num1 = 70, .configure_num2 = 251 },
+};
+
+struct platform_device_id pcdevs_ids[] = {
+    [0] = {
+        .name = "pcdev-Ax",
+        .driver_data = PCDEV_A_CONF
+    },
+    [1] = {
+        .name = "pcdev-Bx",
+        .driver_data = PCDEV_B_CONF
+    },
+    [2] = {
+        .name = "pcdev-Cx",
+        .driver_data = PCDEV_C_CONF
+    },
+    [3] = {
+        .name = "pcdev-Dx",
+        .driver_data = PCDEV_D_CONF
+    },
+    {}
+};
 
 /* Structure represents device private data */
 struct pcdev_private_data {
@@ -226,6 +267,9 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
     pr_info("Device permission %d\n", dev_data->pdata.permission);
     pr_info("Device serial number %s\n", dev_data->pdata.serial_number);
 
+    pr_info("Configure item 1: %d\n", pcdev_configure[pdev->id_entry->driver_data].configure_num1);
+    pr_info("Configure item 2: %d\n", pcdev_configure[pdev->id_entry->driver_data].configure_num2);
+
     /* Dynamically allocate memory for the device buffer */
     dev_data->buffer = devm_kzalloc(&pdev->dev, dev_data->pdata.size, GFP_KERNEL);
     if (!dev_data->buffer) {
@@ -254,6 +298,7 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
     pcdrv_data.total_device++;
 
     pr_info("Probe was successful\n");
+    pr_info("--------------------\n");
     return 0;
 }
 
@@ -269,28 +314,12 @@ int pcd_platform_driver_remove(struct platform_device *pdev) {
     return 0;
 }
 
-// struct platform_device_id pcdevs_ids[] = {
-//     [0] = {
-//         .name = "pcdev-id1",
-//         .driver_data = PCDEV_ID1
-//     },
-//     [1] = {
-//         .name = "pcdev-id2",
-//         .driver_data = PCDEV_ID2
-//     },
-//     [2] = {
-//         .name = "pcdev-id3",
-//         .driver_data = PCDEV_ID3
-//     },
-//     [3] = {
-//         .name = "pcdev-id4",
-//         .driver_data = PCDEV_ID4
-//     }
-// };
-
 struct platform_driver pcd_platform_driver = {
     .probe = pcd_platform_driver_probe,
     .remove = pcd_platform_driver_remove,
+    /* Then try to match against the id table */
+    .id_table = pcdevs_ids,
+    /* fall-back to driver name match */
     .driver = {
         .name = "pseudo-char-device"
     }
