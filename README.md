@@ -15,11 +15,11 @@
 
 ## 2. Prepare
 
-| Sortware          | Hardware              |       
-|-------------------|-----------------------|
-| Ubuntu 18.04      | Beaglebone Black Rev.C|
-| Cross Compile     |
-| VSC or Vim        |
+| Sortware          | Hardware               |       
+|-------------------|------------------------|
+| Ubuntu 18.04      | Beaglebone Black Rev.C |
+| Cross compile     | Cable                  |
+| VSC or vim        |
 
 
 | Reference                                                                               |
@@ -27,3 +27,4 @@
 | [AM335x ARM® Cortex™-A8 Microprocessors (MPUs) Technical Reference Manual](https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/790/AM335x_5F00_techincal_5F00_reference_5F00_manual.pdf) |
 | [AM335x Datasheet](https://www.ti.com/lit/ds/sprs717l/sprs717l.pdf?ts=1598362140689&ref_url=https%253A%252F%252Fwww.google.com%252F) |
 | [Beagleboard Cape Expansion Headers](https://elinux.org/Beagleboard:Cape_Expansion_Headers)|
+| [Device Tree Document](https://www.devicetree.org/specifications/) |
