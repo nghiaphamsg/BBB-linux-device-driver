@@ -2,7 +2,7 @@
  * @brief: pseudo character device driver to support four pseudo character devices.
  *         Implement open/release/read/write/lseek driver methods to handle user requests.
  * @author: NghiaPham
- * @ver: v0.3
+ * @ver: v0.4
  * @date: 2020/09/26
  *
 */
@@ -103,8 +103,19 @@ struct file_operations pcd_fops = {
     .owner = THIS_MODULE
 };
 
+struct platform_driver pcd_platform_driver = {
+    .probe = pcd_platform_driver_probe,
+    .remove = pcd_platform_driver_remove,
+    /* Then try to match against the id table */
+    .id_table = pcdevs_ids,
+    /* fall-back to driver name match */
+    .driver = {
+        .name = "pseudo-char-device"
+    }
+};
+
 int check_permission(int permission, int access_mode){
-#if 0
+
     if (permission == RDWR)
         return 0;
 
@@ -117,8 +128,6 @@ int check_permission(int permission, int access_mode){
         return 0;
     
     return -EPERM;
-#endif
-    return 0;
 }
 
 int pcd_open(struct inode *inode, struct file *filp) {
@@ -314,16 +323,6 @@ int pcd_platform_driver_remove(struct platform_device *pdev) {
     return 0;
 }
 
-struct platform_driver pcd_platform_driver = {
-    .probe = pcd_platform_driver_probe,
-    .remove = pcd_platform_driver_remove,
-    /* Then try to match against the id table */
-    .id_table = pcdevs_ids,
-    /* fall-back to driver name match */
-    .driver = {
-        .name = "pseudo-char-device"
-    }
-};
 
 static int __init char_platform_driver_init(void) {
 
