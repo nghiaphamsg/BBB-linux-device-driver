@@ -2,7 +2,7 @@
  * @brief: pseudo character device driver to support four pseudo character devices.
  *         Implement open/release/read/write/lseek driver methods to handle user requests.
  * @author: NghiaPham
- * @ver: v0.1
+ * @ver: v0.2
  * @date: 2020/10/18
  *
 */
@@ -46,22 +46,19 @@ struct device_configure pcdev_configure[] = {
 };
 
 struct platform_device_id pcdevs_ids[] = {
-    [0] = {
-        .name = "pcdev-Ax",
-        .driver_data = PCDEV_A_CONF
-    },
-    [1] = {
-        .name = "pcdev-Bx",
-        .driver_data = PCDEV_B_CONF
-    },
-    [2] = {
-        .name = "pcdev-Cx",
-        .driver_data = PCDEV_C_CONF
-    },
-    [3] = {
-        .name = "pcdev-Dx",
-        .driver_data = PCDEV_D_CONF
-    },
+    {.name = "pcdev-Ax", .driver_data = PCDEV_A_CONF},
+    {.name = "pcdev-Bx", .driver_data = PCDEV_B_CONF},
+    {.name = "pcdev-Cx", .driver_data = PCDEV_C_CONF},
+    {.name = "pcdev-Dx", .driver_data = PCDEV_D_CONF},
+    {}
+};
+
+/* Struct used for matching a device */
+struct of_device_id org_pcdev_dt_match[] = {
+    {.compatible = "pcdev-Ax", .data = (void *)PCDEV_A_CONF},
+    {.compatible = "pcdev-Bx", .data = (void *)PCDEV_B_CONF},
+    {.compatible = "pcdev-Cx", .data = (void *)PCDEV_C_CONF},
+    {.compatible = "pcdev-Dx", .data = (void *)PCDEV_D_CONF},
     {}
 };
 
@@ -110,7 +107,8 @@ struct platform_driver pcd_platform_driver = {
     .id_table = pcdevs_ids,
     /* fall-back to driver name match */
     .driver = {
-        .name = "pseudo-char-device"
+        .name = "pseudo-char-device",
+        .of_match_table = org_pcdev_dt_match
     }
 };
 

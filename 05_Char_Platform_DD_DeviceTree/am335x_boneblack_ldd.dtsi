@@ -1,0 +1,25 @@
+/ {
+    pcdev-1 {
+        org,size = <512>;
+        org,permission = <0x03>;
+        org,device-serial-num = "PCDEV_1";
+    };
+
+    pcdev-2 {
+        org,size = <512>;
+        org,permission = <0x03>;
+        org,device-serial-num = "PCDEV_2";
+    };
+
+    pcdev-3 {
+        org,size = <1024>;
+        org,permission = <0x01>;
+        org,device-serial-num = "PCDEV_3";
+    };
+
+    pcdev-4 {
+        org,size = <2048>;
+        org,permission = <0x02>;
+        org,device-serial-num = "PCDEV_4";
+    };
+};
