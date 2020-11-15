@@ -104,7 +104,7 @@ my_char
 Step 1: Create a new folder in `/driver/char/<folder_name>/` and copy source c into here
 ```shell
 neko@nekobot:~/linux_4_14/drivers/char$ mkdir my_char; cd my_char
-neko@nekobot:~/linux_4_14/drivers/char/my_char$ cp /01_Basic/main.c ./
+neko@nekobot:~/linux_4_14/drivers/char/my_char$ cp /01_Basic_Hello_World/main.c ./
 ```
 Step 2: Create a `Kconfig` file and add below entries
 ```shell
