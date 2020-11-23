@@ -371,5 +371,5 @@ module_exit(char_platform_driver_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("NghiaPham");
-MODULE_DESCRIPTION("Pseudo character device which handles multiple devices");
+MODULE_DESCRIPTION("Platform driver & platform deivce");
 MODULE_INFO(board,"Beaglebone Black rev.c");

@@ -1,6 +1,6 @@
 <h1> Character Device Driver Multiple </h1>
 
-## 1. Scenario
+## 1. Code exercise
 - Modify the previous pseudo character device driver to support four pseudo character devices.
 - Implement open, release, read, write, lseek driver methods to handle user requests.
 

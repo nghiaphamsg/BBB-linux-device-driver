@@ -4,7 +4,7 @@
 - Sophisticated buffering strategies are usually not involved in char drivers. Because when you write 1 byte, it directly goes to the device without any intermediate buffering, delayed write back, dirty buffer management.
 - Char devices: sensors, RTC, keyboard, serial port, parallel port,...etc.
 
-## 1. Scenario
+## 1. Code exercise
 - Write a character driver to deal with a pseudo character device.
 - The pseudo-device is a memory buffer of some size (in case 512 byte).
 - The driver what you write must support reading/writing/seeking to this device .
