@@ -1,7 +1,7 @@
 obj-m := pcd_driver_dt.o
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabihf-
-KERNEL_DIR=/home/neko/Project/BeagleBoneBlack_Linux_Device_Driver/linux_5.4/
+KERNEL_DIR=/home/neko/Projects/BeagleBoneBlack_Linux_Device_Driver/linux_5.4/
 HOST_KERNEL_DIR=/lib/modules/$(shell uname -r)/build/
 
 all:
