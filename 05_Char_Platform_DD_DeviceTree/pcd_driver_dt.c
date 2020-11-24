@@ -47,6 +47,7 @@ struct device_configure pcdev_configure[] = {
     [PCDEV_D_CONF] = {.configure_num1 = 70, .configure_num2 = 251 },
 };
 
+/* Struct used for matching with setup code */
 struct platform_device_id pcdevs_ids[] = {
     {.name = "pcdev-Ax", .driver_data = PCDEV_A_CONF},
     {.name = "pcdev-Bx", .driver_data = PCDEV_B_CONF},
