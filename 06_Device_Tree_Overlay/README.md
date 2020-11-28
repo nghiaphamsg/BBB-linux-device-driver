@@ -107,4 +107,4 @@ Step 8: Check pcdev again. This time only shows 2 devices pcdev3 & pcdev4 (pcdev
 ![Screenshot from 2020-11-25 22-29-21](https://user-images.githubusercontent.com/32474027/100234298-39596500-2f6e-11eb-9c48-d93907021e2e.png)
 
 ## 5. Load DTO from uEnv.txt
-- Waitting...
+- Using a new uEnv.txt file
