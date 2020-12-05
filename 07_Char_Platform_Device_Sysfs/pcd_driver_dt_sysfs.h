@@ -70,5 +70,10 @@ loff_t pcd_lseek(struct file *filp, loff_t offset, int whence);
 int pcd_platform_driver_probe(struct platform_device *pdev);
 int pcd_platform_driver_remove(struct platform_device *pdev);
 
+/* The prototype functions for device attributes */
+ssize_t max_size_show(struct device *dev, struct device_attribute *attr, char *buf);
+ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, char *buf);
+ssize_t serial_number_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 
 #endif // PCD_DRIVER_DT_SYSFS_H

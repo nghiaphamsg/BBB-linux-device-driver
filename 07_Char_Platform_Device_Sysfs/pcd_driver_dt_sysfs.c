@@ -36,6 +36,10 @@ struct of_device_id org_pcdev_dt_match[] = {
 
 struct pcdrv_private_data pcdrv_data;
 
+/* create two custom attributes of a device. */
+static DEVICE_ATTR(max_size, S_IRUGO | S_IWUSR, max_size_show, max_size_store);
+static DEVICE_ATTR(serial_number, S_IRUGO, serial_number_show, serial_number_store);
+
 struct file_operations pcd_fops = {
     .open = pcd_open,
     .write = pcd_write,
@@ -56,6 +60,28 @@ struct platform_driver pcd_platform_driver = {
         .of_match_table = org_pcdev_dt_match
     }
 };
+
+/* Implement interface for exporting device attributes */
+ssize_t max_size_show(struct device *dev, struct device_attribute *attr, char *buf) {
+
+    /* Get access to the device private data */
+	struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
+	return scnprintf(buf, PAGE_SIZE, "%d\n", dev_data->pdata.size);
+}
+
+ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+    return 0;
+}
+
+ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, char *buf) {
+
+    struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
+	return scnprintf(buf, PAGE_SIZE, "%s\n", dev_data->pdata.serial_number);
+}
+
+ssize_t serial_number_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
+    return 0;
+}
 
 /* This function check device from device tree or setup code */
 struct pcdev_platform_data* pcdev_check_pf_dt(struct device *dev) {
@@ -164,6 +190,19 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
     }
 
     pcdrv_data.total_device++;
+
+    /* Create sub sysfs in device class */
+    ret = sysfs_create_file(&pcdrv_data.device_pcd->kobj, &dev_attr_max_size.attr);
+    if (ret) {
+        device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
+        return ret;
+    }
+
+    ret = sysfs_create_file(&pcdrv_data.device_pcd->kobj, &dev_attr_serial_number.attr);
+    if (ret) {
+        device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
+        return ret;
+    }
 
     dev_info(dev, "Probe was successful\n");
     pr_info("--------------------\n");
