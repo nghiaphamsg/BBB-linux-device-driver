@@ -36,9 +36,20 @@ struct of_device_id org_pcdev_dt_match[] = {
 
 struct pcdrv_private_data pcdrv_data;
 
-/* create two custom attributes of a device. */
+/* Create two custom attributes of a device. */
 static DEVICE_ATTR(max_size, S_IRUGO | S_IWUSR, max_size_show, max_size_store);
-static DEVICE_ATTR(serial_number, S_IRUGO, serial_number_show, serial_number_store);
+static DEVICE_ATTR(serial_number, S_IRUGO, serial_number_show, NULL);
+
+struct attribute *pcd_attrs[] = {
+	&dev_attr_max_size.attr,
+	&dev_attr_serial_number.attr,
+	NULL
+};
+
+struct attribute_group pcd_attr_group = {
+	.name = ATTR_GP_NAME,
+    .attrs = pcd_attrs
+};
 
 struct file_operations pcd_fops = {
     .open = pcd_open,
@@ -64,13 +75,23 @@ struct platform_driver pcd_platform_driver = {
 /* Implement interface for exporting device attributes */
 ssize_t max_size_show(struct device *dev, struct device_attribute *attr, char *buf) {
 
-    /* Get access to the device private data */
 	struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
 	return scnprintf(buf, PAGE_SIZE, "%d\n", dev_data->pdata.size);
 }
 
 ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-    return 0;
+
+    long result;
+    int ret;
+    struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
+    
+    ret = kstrtol(buf, 10, &result);
+    if (ret)
+        return ret;
+    
+    dev_data->pdata.size = result;
+    dev_data->buffer = krealloc(dev_data->buffer, dev_data->pdata.size, GFP_KERNEL);
+	return count;
 }
 
 ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, char *buf) {
@@ -79,12 +100,9 @@ ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, ch
 	return scnprintf(buf, PAGE_SIZE, "%s\n", dev_data->pdata.serial_number);
 }
 
-ssize_t serial_number_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
-    return 0;
-}
-
 /* This function check device from device tree or setup code */
 struct pcdev_platform_data* pcdev_check_pf_dt(struct device *dev) {
+
     struct device_node *dev_node = dev->of_node;
     struct pcdev_platform_data *pdata;
 
@@ -113,6 +131,25 @@ struct pcdev_platform_data* pcdev_check_pf_dt(struct device *dev) {
     }
     
     return pdata;
+}
+
+int pcd_sysfs_create(struct device *dev) {
+
+    int ret;
+    /* Create file sysfs in device class */
+    ret = sysfs_create_file(&dev->kobj, &dev_attr_max_size.attr);
+    if (ret)
+        return ret;
+
+    ret = sysfs_create_file(&dev->kobj, &dev_attr_serial_number.attr);
+    if (ret)
+        return ret;
+
+    /* Create group sysfs in device class */
+    ret = sysfs_create_group(&dev->kobj, &pcd_attr_group);
+    if (ret)
+        return ret;
+
 }
 
 int pcd_platform_driver_probe(struct platform_device *pdev) {
@@ -191,18 +228,11 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
 
     pcdrv_data.total_device++;
 
-    /* Create sub sysfs in device class */
-    ret = sysfs_create_file(&pcdrv_data.device_pcd->kobj, &dev_attr_max_size.attr);
-    if (ret) {
-        device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
-        return ret;
-    }
-
-    ret = sysfs_create_file(&pcdrv_data.device_pcd->kobj, &dev_attr_serial_number.attr);
-    if (ret) {
-        device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
-        return ret;
-    }
+	ret = pcd_sysfs_create(pcdrv_data.device_pcd);
+	if (ret){
+		device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
+		return ret;
+	}
 
     dev_info(dev, "Probe was successful\n");
     pr_info("--------------------\n");
@@ -256,6 +286,7 @@ error_out:
 }
 
 static void __exit char_platform_driver_exit(void) {
+
     platform_driver_unregister(&pcd_platform_driver);
     class_destroy(pcdrv_data.class_pcd);
     unregister_chrdev_region(pcdrv_data.device_number_base, NO_OF_DEVICES);
@@ -268,5 +299,5 @@ module_exit(char_platform_driver_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("NghiaPham");
-MODULE_DESCRIPTION("Pseudo character device which handles multiple devices");
+MODULE_DESCRIPTION("System fs exercise");
 MODULE_INFO(board,"Beaglebone Black rev.c");

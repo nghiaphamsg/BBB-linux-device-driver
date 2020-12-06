@@ -28,6 +28,7 @@
 #define CLASS_NAME      "pcd_class"
 #define DEV_NAME        "pcdevs"
 #define NO_OF_DEVICES   4
+#define ATTR_GP_NAME    "pcd_attr_gp"
 
 /* Create dummy device configure */
 enum pcdev_name {
@@ -74,6 +75,9 @@ int pcd_platform_driver_remove(struct platform_device *pdev);
 ssize_t max_size_show(struct device *dev, struct device_attribute *attr, char *buf);
 ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, char *buf);
-ssize_t serial_number_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+
+/* Other sub-functions */
+struct pcdev_platform_data* pcdev_check_pf_dt(struct device *dev);
+int pcd_sysfs_create(struct device *dev);
 
 #endif // PCD_DRIVER_DT_SYSFS_H
