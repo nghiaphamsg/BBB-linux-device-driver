@@ -1,0 +1,7 @@
+console=ttyO0,115200n8
+loadaddr=0x82000000
+fdtaddr=0x88000000
+loadfromsd=load mmc 0:1 ${loadaddr} uImage;load mmc 0:1 ${fdtaddr} am335x-boneblack.dtb
+linuxbootargs=setenv bootargs console=${console} root=/dev/mmcblk0p2 rw 
+uenvcmd=setenv autoload no; run loadfromsd; run linuxbootargs; bootm ${loadaddr} - ${fdtaddr}
+
