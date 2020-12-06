@@ -228,11 +228,11 @@ int pcd_platform_driver_probe(struct platform_device *pdev) {
 
     pcdrv_data.total_device++;
 
-	ret = pcd_sysfs_create(pcdrv_data.device_pcd);
-	if (ret){
-		device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
-		return ret;
-	}
+    ret = pcd_sysfs_create(pcdrv_data.device_pcd);
+    if (ret){
+        device_destroy(pcdrv_data.class_pcd, dev_data->dev_num);
+        return ret;
+    }
 
     dev_info(dev, "Probe was successful\n");
     pr_info("--------------------\n");
