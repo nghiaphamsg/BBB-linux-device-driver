@@ -52,7 +52,12 @@
 
         gpio5 {
             lable = "userled1:gpio2.22";
-            bone-gpios = <&gpio2 22 GPIO_ACTIVE_HIGH>;
+            bone-gpios = <&gpio1 22 GPIO_ACTIVE_HIGH>;
+        };
+
+        gpio6 {
+            lable = "userled2:gpio1.23";
+            bone-gpios = <&gpio1 23 GPIO_ACTIVE_HIGH>;
         };
     };
 };

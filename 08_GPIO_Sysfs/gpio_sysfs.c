@@ -29,7 +29,7 @@ struct platform_driver gpio_platform_driver = {
 int gpio_sysfs_probe(struct platform_device *pdev) {
 
     const char *name;
-    int count = 0, ret;
+    int pos = 0, ret;
 
     struct gpiodev_private_data *dev_data; 
     struct device *dev = &pdev->dev;
@@ -49,7 +49,7 @@ int gpio_sysfs_probe(struct platform_device *pdev) {
         /* Get a lable device tree child node */
         if (of_property_read_string(child, "lable", &name)) {
             dev_warn(dev, "Missing lable from device tree\n");
-            snprintf(dev_data->lable, sizeof(dev_data->lable), "unkn_gpio%d", count);
+            snprintf(dev_data->lable, sizeof(dev_data->lable), "unkn_gpio%d", pos);
         } 
         else {
             strcpy(dev_data->lable, name);
@@ -72,7 +72,7 @@ int gpio_sysfs_probe(struct platform_device *pdev) {
             return ret;
         }
 
-        count++;
+        pos++;
     }
     return 0;
 }
