@@ -41,13 +41,13 @@ static DEVICE_ATTR(max_size, S_IRUGO | S_IWUSR, max_size_show, max_size_store);
 static DEVICE_ATTR(serial_number, S_IRUGO, serial_number_show, NULL);
 
 struct attribute *pcd_attrs[] = {
-	&dev_attr_max_size.attr,
-	&dev_attr_serial_number.attr,
-	NULL
+    &dev_attr_max_size.attr,
+    &dev_attr_serial_number.attr,
+    NULL
 };
 
 struct attribute_group pcd_attr_group = {
-	.name = ATTR_GP_NAME,
+    .name = ATTR_GP_NAME,
     .attrs = pcd_attrs
 };
 
@@ -75,8 +75,8 @@ struct platform_driver pcd_platform_driver = {
 /* Implement interface for exporting device attributes */
 ssize_t max_size_show(struct device *dev, struct device_attribute *attr, char *buf) {
 
-	struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
-	return scnprintf(buf, PAGE_SIZE, "%d\n", dev_data->pdata.size);
+    struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
+    return scnprintf(buf, PAGE_SIZE, "%d\n", dev_data->pdata.size);
 }
 
 ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
@@ -97,7 +97,7 @@ ssize_t max_size_store(struct device *dev, struct device_attribute *attr, const 
 ssize_t serial_number_show(struct device *dev, struct device_attribute *attr, char *buf) {
 
     struct pcdev_private_data *dev_data = dev_get_drvdata(dev->parent);
-	return scnprintf(buf, PAGE_SIZE, "%s\n", dev_data->pdata.serial_number);
+    return scnprintf(buf, PAGE_SIZE, "%s\n", dev_data->pdata.serial_number);
 }
 
 /* This function check device from device tree or setup code */
