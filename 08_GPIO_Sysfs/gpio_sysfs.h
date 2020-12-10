@@ -26,7 +26,6 @@
 #define pr_fmt(fmt) "[%s]: " fmt, __func__
 
 #define CLASS_NAME      "bone_gpio_class"
-#define ATTR_GP_NAME    "pcd_attr_gp"
 
 /* Structure represents device private data */
 struct gpiodev_private_data {
@@ -39,6 +38,7 @@ struct gpiodev_private_data {
 struct gpiodrv_private_data {
     int total_device;
     struct class *class_gpio;
+    struct device **dev;
 };
 
 /* The prototype functions for the platform driver */
