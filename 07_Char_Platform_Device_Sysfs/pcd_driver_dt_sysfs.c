@@ -150,6 +150,7 @@ int pcd_sysfs_create(struct device *dev) {
     if (ret)
         return ret;
 
+    return 0;
 }
 
 int pcd_platform_driver_probe(struct platform_device *pdev) {
