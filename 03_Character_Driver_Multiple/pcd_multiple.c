@@ -13,6 +13,7 @@
 #include <linux/device.h>
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
+#include <linux/mutex.h>
 
 #undef pr_fmt
 #define pr_fmt(fmt) "[%s]: " fmt, __func__
@@ -42,6 +43,7 @@ struct pcdev_private_data {
     const char *serial_number;
     int permission;
     struct cdev cdev;
+    struct mutex pcdev_lock;
 };
 
 /* Structure represents driver private data */
@@ -147,6 +149,9 @@ ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_p
     struct pcdev_private_data *pcdev_data = (struct pcdev_private_data *)filp->private_data;
     max_size = pcdev_data->size;
 
+    if (mutex_lock_interruptible(&pcdev_data->pcdev_lock))
+        return -EINTR;
+
     pr_info("Read requested for %zu bytes \n",count);
     pr_info("Current file position = %lld\n",*f_pos);
 
@@ -162,6 +167,7 @@ ssize_t pcd_read(struct file *filp, char __user *buff, size_t count, loff_t *f_p
     pr_info("Number of bytes successfully read = %zu\n", count);
     pr_info("Updated file position = %lld\n",*f_pos);
 
+    mutex_unlock(&pcdev_data->pcdev_lock);
     return count;
 }
 
@@ -170,6 +176,9 @@ ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff
     int max_size;
     struct pcdev_private_data *pcdev_data = (struct pcdev_private_data *)filp->private_data;
     max_size = pcdev_data->size;
+
+    if (mutex_lock_interruptible(&pcdev_data->pcdev_lock))
+        return -EINTR;
 
     pr_info("Write requested %zu bytes \n",count);
     pr_info("Current file position = %lld\n",*f_pos);
@@ -189,6 +198,7 @@ ssize_t pcd_write(struct file *filp, const char __user *buff, size_t count, loff
     pr_info("Number of bytes successfully written = %zu\n", count);
     pr_info("Updated file position = %lld\n",*f_pos);
 
+    mutex_unlock(&pcdev_data->pcdev_lock);
     return count;
 }
 
@@ -250,6 +260,9 @@ static int __init char_device_driver_init(void) {
     for (i = 0; i < NO_OF_DEVICES; i++) {
         pr_info("Device number <Major>:<Minor> = %d:%d\n", MAJOR(pcdrv_data.device_number + i), \
                                                            MINOR(pcdrv_data.device_number + i));
+
+        /* Initialize mutex for each device */
+        mutex_init(&pcdrv_data.pcdev_data[i].pcdev_lock);
 
         /* Make a character device registration with the VFS */
         cdev_init(&pcdrv_data.pcdev_data[i].cdev, &pcd_fops);
