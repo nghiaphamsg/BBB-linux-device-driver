@@ -19,7 +19,7 @@
 
 ## 2. Prepare
 
-| Sortware              | Hardware               |       
+| Software              | Hardware               |       
 |-----------------------|------------------------|
 | ubuntu 18.04/20.04    | Beaglebone Black Rev.C |
 | cross compile 7 or 8  | cable, led, lcd        |
