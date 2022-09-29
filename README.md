@@ -58,7 +58,7 @@
 ```shell
 ls arch/<you_arch>/configs/ 
 ```
-- For ARM-based CPUs, these configs files are located in `arch/arm/configs/`, and for an BeagleBone Black processor, the default file config is `arch/arm/configs/bb.org_defconfig`. Similarly, for x86 processors we find the files in `arch/x86/configs/`, with only two default configuration files, `i386_defconfig` and `x86_64_defconfig`, for 32- and 64-bit versions respectively.
+- For ARM-based CPUs, these configs files are located in `arch/arm/configs/`, and for an BeagleBone Black processor, the default file config is `arch/arm/configs/bb.org_defconfig`. Similarly, for x86 processors we find the files in `arch/x86/configs/`, with only two default configuration files, `i386_defconfig` and `x86_64_defconfig`, for 32-bit and 64-bit versions respectively.
 - For an x86 system:
 ```shell
 make x86_64_defconfig
